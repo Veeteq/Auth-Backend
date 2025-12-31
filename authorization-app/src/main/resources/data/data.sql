@@ -1,0 +1,1 @@
+insert into authusers (id, username, password, firstname, lastname) values (1001, 'jmclane', '$2a$12$LZsMnNPZ9x7esaSpL6a3HeYtwVaJKjpsp3H2ayX2Z/ELo7PTVl.qu', 'John', 'McLane');
