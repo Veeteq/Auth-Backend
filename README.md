@@ -76,3 +76,18 @@ With a valid token in Authorization header, returns 200.
 - CorsConfigurationSource wired to your application.yml
 - JwtEncoder/JwtDecoder beans (RS256 keypair for dev)
 - A POST /auth/login endpoint example returning { token }
+
+# Chunk 4 — Auth Endpoints (Login / Register / Refresh)
+Goal: Provide endpoints to get tokens and manage account creation.
+What you’ll do:
+
+POauthST /auth/login: authenticate user via AuthenticationManager, return JWT.
+POST /auth/register: create user (hash password, check duplicates).
+(Optional) POST /auth/refresh: accept refresh token (httpOnly cookie or header) and issue a new access token.
+
+Validation:
+
+- Login returns { token }.
+- Protected calls succeed with token.
+- Register creates a user and can login thereafter.
+- Refresh flow returns a new token when the access token expires.
