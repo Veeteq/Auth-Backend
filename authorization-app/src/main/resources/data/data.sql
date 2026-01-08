@@ -1,1 +1,2 @@
-insert into authusers (id, username, password, firstname, lastname) values (1001, 'jmclane', '$2a$12$LZsMnNPZ9x7esaSpL6a3HeYtwVaJKjpsp3H2ayX2Z/ELo7PTVl.qu', 'John', 'McLane');
+insert into authusers (user_id, username, password, firstname, lastname) values (1001, 'jmclane', '$2a$12$LZsMnNPZ9x7esaSpL6a3HeYtwVaJKjpsp3H2ayX2Z/ELo7PTVl.qu', 'John', 'McLane');
+insert into user_roles(user_id, role_name) values (1001, 'USER_ROLE');
