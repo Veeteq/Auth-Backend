@@ -20,20 +20,24 @@ import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "authusers", uniqueConstraints = {
-        @UniqueConstraint(name = "authusers_username_pk", columnNames = {"username"}),
-        @UniqueConstraint(name = "authusers_email_pk", columnNames = {"email"})
+        @UniqueConstraint(name = "authusers_username_uq", columnNames = {"username"}),
+        @UniqueConstraint(name = "authusers_email_uq", columnNames = {"email"})
 })
 public class AuthUser {
 
     @Id
+    @Column(name = "user_id")
     private Long id;
 
+    /** Unique username for login */
     @Column(name = "username", nullable = false, length = 100)
     private String username;
 
-    @Column(name = "password", nullable = false, length = 100)
+    /** BCrypt hashed password */
+    @Column(name = "password", nullable = false, length = 255)
     private String password;
 
+    /** Unique email for contact/login */
     @Column(name = "email", nullable = false, length = 100)
     private String email;
 
@@ -42,14 +46,18 @@ public class AuthUser {
     
     @Column(name = "lastname", nullable = false, length = 100)
     private String lastname;
-    
+
+    /** Enabled/disabled flag */
+    @Column(nullable = false)
+    private boolean enabled = true;
+
     /** Roles, e.g., ROLE_USER, ROLE_ADMIN */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "fk_user_roles_user"))
+        joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id", foreignKey = @ForeignKey(name = "user_roles_user_fk"))
     )
-    @Column(name = "role", nullable = false, length = 64)
+    @Column(name = "role_name", nullable = false, length = 64)
     private Set<String> roles = new HashSet<>();
     
     @Column(name = "create_time")
@@ -60,61 +68,76 @@ public class AuthUser {
     @LastModifiedDate
     private Instant updatedAt;
 
-	public Long getId() {
-		return id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public AuthUser setId(Long id) {
+        this.id = id;
+        return this;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public AuthUser setUsername(String username) {
+        this.username = username;
+        return this;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public String getPassword() {
+        return password;
+    }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public AuthUser setPassword(String password) {
+        this.password = password;
+        return this;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public AuthUser setEmail(String email) {
+        this.email = email;
+        return this;
+    }
 
-	public String getFirstname() {
-		return firstname;
-	}
+    public String getFirstname() {
+        return firstname;
+    }
 
-	public void setFirstname(String firstname) {
-		this.firstname = firstname;
-	}
+    public AuthUser setFirstname(String firstname) {
+        this.firstname = firstname;
+        return this;
+    }
 
-	public String getLastname() {
-		return lastname;
-	}
+    public String getLastname() {
+        return lastname;
+    }
 
-	public void setLastname(String lastname) {
-		this.lastname = lastname;
-	}
+    public AuthUser setLastname(String lastname) {
+        this.lastname = lastname;
+        return this;
+    }
 
-	public Set<String> getRoles() {
-		return roles;
-	}
+    public boolean isEnabled() {
+        return enabled;
+    }
 
-	public void addToRoles(String role) {
+    public AuthUser setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        return this;
+    }
+
+    public Set<String> getRoles() {
+        return roles;
+    }
+
+    public AuthUser addToRoles(String role) {
 		this.roles.add(role);
+        return this;
 	}
 
-    
 }
