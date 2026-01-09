@@ -1,3 +1,6 @@
+drop table if exists user_roles;
+drop table if exists authusers;
+
 create table authusers (
   user_id bigint not null,
   username varchar(100) not null,
