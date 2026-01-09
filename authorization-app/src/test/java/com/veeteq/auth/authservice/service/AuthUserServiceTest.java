@@ -77,7 +77,7 @@ public class AuthUserServiceTest {
     public void testRegister() {
         when(passwordEncoder.encode("password")).thenReturn("hashedPassword");
 
-        AuthUser registeredUser = authUserService.register("testuser", "password", "test@example.com", "Test", "User");
+        authUserService.register("testuser", "password", "test@example.com", "Test", "User");
 
         // Capture the argument passed to the save method
         ArgumentCaptor<AuthUser> userCaptor = forClass(AuthUser.class);
