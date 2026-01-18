@@ -1,14 +1,8 @@
 package com.veeteq.auth.authservice.rest.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.time.Instant;
-import java.util.List;
-
+import com.veeteq.auth.authservice.entity.AuthUser;
+import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
+import com.veeteq.auth.authservice.service.AuthUserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -23,11 +17,20 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 
-import com.veeteq.auth.authservice.rest.dto.AuthResponseDto;
-import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 public class AuthControllerTest {
-	
+
+    @Mock
+    private AuthUserService authUserService;
+
     @Mock
     private AuthenticationManager authManager;
 
@@ -47,7 +50,9 @@ public class AuthControllerTest {
         var loginRequest = new LoginRequestDto();
         loginRequest.setUsername("testuser");
         loginRequest.setPassword("password");
-        
+
+        when(authUserService.findByUsername(anyString())).thenReturn(Optional.of(new AuthUser().setUsername("Witek")));
+
         var authentication = new TestingAuthenticationToken("testuser", "password", "ROLE_USER");
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
 
@@ -72,7 +77,7 @@ public class AuthControllerTest {
 
         // Assert
         assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
-        AuthResponseDto responseBody = response.getBody();
+        var responseBody = response.getBody();
         assert responseBody != null; // Ensure response body is not null
         assertEquals("Bearer", responseBody.getType());
         assertEquals(tokenValue, responseBody.getToken());
@@ -92,4 +97,5 @@ public class AuthControllerTest {
         assertNotNull(exc);
         assertEquals("Authentication failed", exc.getMessage());
     }
+
 }

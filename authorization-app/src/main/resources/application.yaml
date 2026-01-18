@@ -58,6 +58,17 @@ app:
       - Authorization
       - Content-Type
     allow-credentials: true
+  jwt:
+    access-token-seconds: 3600
+    refresh-token-days: 14            # 14 days refresh lifetime
+  cookie:
+    refresh:
+      name: REFRESH_TOKEN
+      domain: localhost               # set your domain in prod (e.g., app.example.com)
+      path: /api/auth
+      secure: false                   # true in prod (HTTPS)
+      http-only: true
+      same-site: Lax                  # use "None" for cross-site; requires secure=true
 
 management:
   endpoint:
