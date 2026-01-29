@@ -53,10 +53,7 @@ public class AuthUser {
 
     /** Roles, e.g., ROLE_USER, ROLE_ADMIN */
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id", foreignKey = @ForeignKey(name = "user_roles_user_fk"))
-    )
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id", foreignKey = @ForeignKey(name = "user_roles_user_fk")))
     @Column(name = "role_name", nullable = false, length = 64)
     private Set<String> roles = new HashSet<>();
     

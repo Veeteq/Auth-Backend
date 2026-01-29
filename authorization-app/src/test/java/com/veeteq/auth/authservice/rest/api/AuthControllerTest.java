@@ -89,7 +89,7 @@ public class AuthControllerTest {
         when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(jwt);
 
         // Act
-        var response = authController.authenticateUser(loginRequest);
+        var response = authController.loginUser(loginRequest);
 
         // Assert
         assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
@@ -109,7 +109,7 @@ public class AuthControllerTest {
 
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenThrow(new RuntimeException("Authentication failed"));
 
-        var exc = assertThrows(RuntimeException.class, () -> authController.authenticateUser(loginRequest));
+        var exc = assertThrows(RuntimeException.class, () -> authController.loginUser(loginRequest));
         assertNotNull(exc);
         assertEquals("Authentication failed", exc.getMessage());
     }
