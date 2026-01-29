@@ -1,14 +1,19 @@
 package com.veeteq.auth.authservice.rest.api;
 
 import com.veeteq.auth.authservice.entity.AuthUser;
+import com.veeteq.auth.authservice.entity.RefreshToken;
 import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
 import com.veeteq.auth.authservice.service.AuthUserService;
+import com.veeteq.auth.authservice.service.CookieService;
+import com.veeteq.auth.authservice.service.RefreshTokenService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +37,12 @@ public class AuthControllerTest {
     private AuthUserService authUserService;
 
     @Mock
+    private RefreshTokenService refreshTokenService;
+    
+    @Mock
+    private CookieService cookieService;
+    
+    @Mock
     private AuthenticationManager authManager;
 
     @Mock
@@ -53,6 +64,11 @@ public class AuthControllerTest {
 
         when(authUserService.findByUsername(anyString())).thenReturn(Optional.of(new AuthUser().setUsername("Witek")));
 
+        var mockToken = new RefreshToken().setToken("dummy-refresh-token-123");
+        when(refreshTokenService.issueToken(any(AuthUser.class))).thenReturn(mockToken);
+        
+        when(cookieService.createCookie(anyString())).thenReturn(ResponseCookie.from("dummy-cookie-name", mockToken.getToken()).build());
+        
         var authentication = new TestingAuthenticationToken("testuser", "password", "ROLE_USER");
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
 

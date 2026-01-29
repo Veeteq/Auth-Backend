@@ -59,7 +59,7 @@ public class AuthController implements AuthenticationApi {
 
         var authUser = authUserService.findByUsername(authentication.getName()).orElseThrow();
         var refreshToken = refreshTokenService.issueToken(authUser);
-        ResponseCookie cookie = cookieService.createCookie(refreshToken.getToken());
+        var cookie = cookieService.createCookie(refreshToken.getToken());
         var headers = new HttpHeaders();
         headers.add("Set-Cookie", cookie.toString());
 

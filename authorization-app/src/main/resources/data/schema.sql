@@ -1,3 +1,4 @@
+drop table if exists refresh_tokens;
 drop table if exists user_roles;
 drop table if exists authusers;
 
