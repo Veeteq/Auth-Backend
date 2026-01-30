@@ -67,7 +67,7 @@ public class AuthCtrlTest {
         //given
         var dto = new LoginRequestDto()
                 .username("jmclane")
-                .password("123456");
+                .password("abc123456xyz");
 
         var authentication = new UsernamePasswordAuthenticationToken("demo", null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
         when(authenticationManager.authenticate(any())).thenReturn(authentication);

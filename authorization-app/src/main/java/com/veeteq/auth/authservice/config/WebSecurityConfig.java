@@ -43,6 +43,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll() // dev only
                         .anyRequest().authenticated())
                 .headers(headers -> headers.frameOptions(fo -> fo.sameOrigin()))
+                //.exceptionHandling(e -> e.authenticationEntryPoint(null))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
                         .decoder(jwtDecoder)
                         .jwtAuthenticationConverter(jwtAuthenticationTokenConverter)));

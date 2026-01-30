@@ -1,6 +1,8 @@
 package com.veeteq.auth.authservice.rest.api;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,7 +12,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.veeteq.auth.authservice.rest.dto.AuthTokenResponseDto;
 import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
 import com.veeteq.auth.authservice.rest.dto.LoginResponseDto;
 import com.veeteq.auth.authservice.rest.dto.UserRegistrationDto;
@@ -49,32 +51,51 @@ public class AuthController implements AuthenticationApi {
         this.cookieService = cookieService;
     }
 
-
     /** LOGIN: issue access token + set refresh cookie */
     @Override
     @PostMapping(path = "/authenticate")
-    public ResponseEntity<LoginResponseDto> authenticateUser(LoginRequestDto loginRequest) {
+    public ResponseEntity<LoginResponseDto> loginUser(LoginRequestDto loginRequest) {
         var authToken = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
         var authentication = authManager.authenticate(authToken);
 
         var authUser = authUserService.findByUsername(authentication.getName()).orElseThrow();
         var refreshToken = refreshTokenService.issueToken(authUser);
-        ResponseCookie cookie = cookieService.createCookie(refreshToken.getToken());
+        var cookie = cookieService.createCookie(refreshToken.getToken());
         var headers = new HttpHeaders();
         headers.add("Set-Cookie", cookie.toString());
 
-        var response = issueAccessToken(authentication);
+        Instant now = Instant.now();
+        Instant expiresAt = now.plusSeconds(accessTokenSeconds);
+
+        List<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .subject(authentication.getName())
+                .issuedAt(now)
+                .expiresAt(expiresAt)
+                .claim("roles", roles)
+                .build();
+
+        String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+        var response = new LoginResponseDto()
+                .type("Bearer")
+                .token(token)
+                .expiresAt(LocalDateTime.ofInstant(expiresAt, ZoneOffset.UTC))
+                .roles(roles)
+                .user(null);
 
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(response);
     }
 
-
     /** REFRESH: read refresh cookie, validate, rotate, return new access token */
     @Override
     @PostMapping(path = "/refresh")
-    public ResponseEntity<LoginResponseDto> refreshToken(String setCookie, LoginRequestDto loginRequestDto) {
+    public ResponseEntity<AuthTokenResponseDto> refreshToken(String setCookie) {
         var cookieName = cookieService.getName();
         var cookieToken = extractCookie(setCookie, cookieName);
 
@@ -97,38 +118,7 @@ public class AuthController implements AuthenticationApi {
                 .map(SimpleGrantedAuthority::new)
                 .toList();
         var authentication = new UsernamePasswordAuthenticationToken(authUser.getUsername(), null, userRoles);
-        var response = issueAccessToken(authentication);
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(response);
-    }
-
-    //@Override
-    public ResponseEntity<Void> registerUser(UserRegistrationDto userRegistrationDto) {
-        return null;
-    }
-
-    /** LOGOUT: revoke refresh token and clear cookie */
-    @Override
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logoutUser(String setCookie, LoginRequestDto loginRequestDto) {
-        String cookieName = cookieService.getName();
-        String cookieToken = extractCookie(setCookie, cookieName);
-        if (cookieToken != null && !cookieToken.isBlank()) {
-            refreshTokenService.revoke(cookieToken);
-        }
-
-        ResponseCookie cookie = cookieService.clearCookie();
-        var headers = new HttpHeaders();
-        headers.add("Set-Cookie", cookie.toString());
-
-        return ResponseEntity.noContent()
-                .headers(headers)
-                .build();
-    }
-
-    private LoginResponseDto issueAccessToken(Authentication authentication) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(accessTokenSeconds);
 
@@ -145,14 +135,38 @@ public class AuthController implements AuthenticationApi {
 
         String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 
-        var response = new LoginResponseDto()
+        var response = new AuthTokenResponseDto()
                 .type("Bearer")
                 .token(token)
-                .expiresAt(expiresAt.toString())
-                .roles(roles)
-                .user(null);
+                .expiresAt(LocalDateTime.ofInstant(expiresAt, ZoneOffset.UTC));
 
-        return response;
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(response);
+    }
+
+    //@Override
+    public ResponseEntity<Void> registerUser(UserRegistrationDto userRegistrationDto) {
+        return null;
+    }
+
+    /** LOGOUT: revoke refresh token and clear cookie */
+    @Override
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logoutUser(String setCookie) {
+        String cookieName = cookieService.getName();
+        String cookieToken = extractCookie(setCookie, cookieName);
+        if (cookieToken != null && !cookieToken.isBlank()) {
+            refreshTokenService.revoke(cookieToken);
+        }
+
+        ResponseCookie cookie = cookieService.clearCookie();
+        var headers = new HttpHeaders();
+        headers.add("Set-Cookie", cookie.toString());
+
+        return ResponseEntity.noContent()
+                .headers(headers)
+                .build();
     }
 
     private String extractCookie(String cookieHeader, String cookieName) {
