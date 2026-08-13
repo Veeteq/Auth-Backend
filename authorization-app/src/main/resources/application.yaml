@@ -1,4 +1,5 @@
 server:
+  address: 0.0.0.0
   port: 8282
 
 spring:
@@ -88,3 +89,7 @@ logging:
         jdbc:
           datasource:
             init: DEBUG
+        security:
+          authentication: DEBUG
+      zalando:
+        logbook: INFO
