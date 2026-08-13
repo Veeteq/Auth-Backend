@@ -1,9 +1,9 @@
 package com.veeteq.auth.authservice.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.veeteq.auth.authservice.config.JacksonProblemConfig;
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
-import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
 import com.veeteq.auth.authservice.service.AuthUserService;
 import com.veeteq.auth.authservice.service.CookieService;
 import com.veeteq.auth.authservice.service.RefreshTokenService;
@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -23,7 +24,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
+import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -31,12 +32,14 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false) // disable security filters for slice test
-public class AuthCtrlTest {
+@Import(JacksonProblemConfig.class)
+public class AuthController3Test {
 
     @MockitoBean
     private AuthenticationManager authenticationManager;
@@ -82,7 +85,7 @@ public class AuthCtrlTest {
         var jwt = buildJwt();
         when(jwtEncoder.encode(any())).thenReturn(jwt);
 
-        mockMvc.perform(post(baseUrl.concat("/authenticate"))
+        mockMvc.perform(post(baseUrl.concat("/login"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto))
                         .accept(MediaType.APPLICATION_JSON))
@@ -100,12 +103,14 @@ public class AuthCtrlTest {
         var dto = new LoginRequestDto()
                 .username("jmclane");
 
-        mockMvc.perform(post(baseUrl.concat("/authenticate"))
+        mockMvc.perform(post(baseUrl.concat("/login"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto))
                         .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.password").value("must not be null"));
+                .andExpect(jsonPath("$.violations[0].field").value("password"))
+                .andExpect(jsonPath("$.violations[0].message").value("must not be null"));
     }
 
     private Jwt buildJwt() {
