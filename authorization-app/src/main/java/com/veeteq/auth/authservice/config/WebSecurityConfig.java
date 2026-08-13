@@ -40,6 +40,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health").permitAll() // Allow access to health endpoint
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/.well-known/jwks.json").permitAll()
                         .requestMatchers("/h2-console/**").permitAll() // dev only
                         .anyRequest().authenticated())
                 .headers(headers -> headers.frameOptions(fo -> fo.sameOrigin()))
