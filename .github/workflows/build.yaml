@@ -1,5 +1,5 @@
 # Build Application
-name: Build & Document Manager SpringBoot application
+name: Build Auth Manager SpringBoot application
 
 on: push
 
