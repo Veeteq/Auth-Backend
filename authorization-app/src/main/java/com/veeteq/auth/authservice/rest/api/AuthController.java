@@ -15,11 +15,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.veeteq.auth.authservice.rest.dto.AuthTokenResponseDto;
 import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
@@ -35,6 +34,7 @@ public class AuthController implements AuthenticationApi {
 
     private final AuthenticationManager authManager;
     private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
     private final AuthUserService authUserService;
     private final RefreshTokenService refreshTokenService;
     private final CookieService cookieService;
@@ -43,9 +43,10 @@ public class AuthController implements AuthenticationApi {
     @Value("${app.jwt.access-token-seconds:3600}")
     private long accessTokenSeconds;
 
-    public AuthController(AuthenticationManager authManager, JwtEncoder jwtEncoder, AuthUserService authUserService, RefreshTokenService refreshTokenService, CookieService cookieService) {
+    public AuthController(AuthenticationManager authManager, JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, AuthUserService authUserService, RefreshTokenService refreshTokenService, CookieService cookieService) {
         this.authManager = authManager;
         this.jwtEncoder = jwtEncoder;
+        this.jwtDecoder = jwtDecoder;
         this.authUserService = authUserService;
         this.refreshTokenService = refreshTokenService;
         this.cookieService = cookieService;
@@ -74,6 +75,7 @@ public class AuthController implements AuthenticationApi {
                 .toList();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("http://localhost:8282")
                 .subject(authentication.getName())
                 .issuedAt(now)
                 .expiresAt(expiresAt)
@@ -169,6 +171,12 @@ public class AuthController implements AuthenticationApi {
         return ResponseEntity.noContent()
                 .headers(headers)
                 .build();
+    }
+
+    @GetMapping("/validate")
+    public String validate(@RequestParam String token) {
+        jwtDecoder.decode(token);
+        return "VALID";
     }
 
     private String extractCookie(String cookieHeader, String cookieName) {

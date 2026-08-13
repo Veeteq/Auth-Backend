@@ -1,5 +1,6 @@
 package com.veeteq.auth.authservice.rest.api;
 
+import com.veeteq.auth.authservice.controller.HelloController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
