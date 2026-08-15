@@ -1,0 +1,9 @@
+package com.veeteq.auth.authservice.config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties(prefix = "app.security")
+public record SecurityProperties(
+        String issuer,
+        long accessTokenSeconds
+) {}

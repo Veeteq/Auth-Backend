@@ -20,7 +20,7 @@ public class JwksController {
 
     @GetMapping("/.well-known/jwks.json")
     public Map<String, Object> jwks() {
-        RSAKey publicJwk = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
+        var publicJwk = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
                 .keyID("auth-service-key")
                 .build();
 

@@ -3,10 +3,7 @@ package com.veeteq.auth.authservice.rest.api;
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
 import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
-import com.veeteq.auth.authservice.service.AuthUserService;
-import com.veeteq.auth.authservice.service.CookieService;
-import com.veeteq.auth.authservice.service.RefreshTokenService;
-
+import com.veeteq.auth.authservice.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,10 +14,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.core.Authentication;
 
 import java.time.Instant;
 import java.util.List;
@@ -37,6 +31,9 @@ public class AuthController1Test {
     private AuthUserService authUserService;
 
     @Mock
+    private AccessTokenService accessTokenService;
+
+    @Mock
     private RefreshTokenService refreshTokenService;
     
     @Mock
@@ -44,9 +41,6 @@ public class AuthController1Test {
     
     @Mock
     private AuthenticationManager authManager;
-
-    @Mock
-    private JwtEncoder jwtEncoder;
 
     @InjectMocks
     private AuthController authController;
@@ -72,21 +66,9 @@ public class AuthController1Test {
         var authentication = new TestingAuthenticationToken("testuser", "password", "ROLE_USER");
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
 
-        var now = Instant.now();
-        var expiresAt = Instant.now().plusSeconds(3600);
-        
-        String tokenValue = "mockJwtToken";
-        var claims = JwtClaimsSet.builder()
-                .subject("testuser")
-                .issuedAt(now)
-                .expiresAt(expiresAt)
-                .claim("roles", List.of("ROLE_USER"))
-                .build();
-        Jwt jwt = Jwt.withTokenValue(tokenValue)
-        	      .header("alg", "none")
-        	      .claims(c -> c.putAll(claims.getClaims()))
-        	      .build();
-        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(jwt);
+        //when(accessTokenService.extractRoles(authentication)).thenReturn(List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
+        var accessTokenResult = new AccessTokenResult("test-access-token", Instant.parse("2026-08-15T18:00:00Z"), List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
+        when(accessTokenService.issueToken(any(Authentication.class))).thenReturn(accessTokenResult);
 
         // Act
         var response = authController.loginUser(loginRequest);
@@ -96,9 +78,9 @@ public class AuthController1Test {
         var responseBody = response.getBody();
         assert responseBody != null; // Ensure response body is not null
         assertEquals("Bearer", responseBody.getType());
-        assertEquals(tokenValue, responseBody.getToken());
+        assertEquals("test-access-token", responseBody.getToken());
         //assertEquals(expiresAt.toString(), responseBody.getExpiresAt());
-        assertEquals(List.of("ROLE_USER"), responseBody.getRoles());
+        assertEquals(List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"), responseBody.getRoles());
     }
     
     @Test

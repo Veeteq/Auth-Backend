@@ -50,4 +50,5 @@ public class WebSecurityConfig {
                         .jwtAuthenticationConverter(jwtAuthenticationTokenConverter)));
         return http.build();
     }
+
 }
