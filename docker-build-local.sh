@@ -9,7 +9,12 @@ HOST_PORT="8282"
 CONTAINER_PORT="8080"
 
 echo "Configuring app network"
-docker network create "${NETWORK_NAME}"
+if ! docker network inspect "${NETWORK_NAME}" >/dev/null 2>&1; then
+  echo "Docker network '${NETWORK_NAME}' does not exist. Creating it..."
+  docker network create "${NETWORK_NAME}"
+else
+  echo "Docker network '${NETWORK_NAME}' already exists."
+fi
 
 echo "Building Docker image: ${IMAGE_NAME}"
 
