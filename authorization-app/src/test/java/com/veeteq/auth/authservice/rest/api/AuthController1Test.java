@@ -3,11 +3,7 @@ package com.veeteq.auth.authservice.rest.api;
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
 import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
-import com.veeteq.auth.authservice.service.AccessTokenService;
-import com.veeteq.auth.authservice.service.AuthUserService;
-import com.veeteq.auth.authservice.service.CookieService;
-import com.veeteq.auth.authservice.service.RefreshTokenService;
-
+import com.veeteq.auth.authservice.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,7 +14,9 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,8 +66,9 @@ public class AuthController1Test {
         var authentication = new TestingAuthenticationToken("testuser", "password", "ROLE_USER");
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
 
-        when(accessTokenService.extractRoles(authentication)).thenReturn(List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
-        when(accessTokenService.issueToken(any(), any(), any())).thenReturn("test-access-token");
+        //when(accessTokenService.extractRoles(authentication)).thenReturn(List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
+        var accessTokenResult = new AccessTokenResult("test-access-token", Instant.parse("2026-08-15T18:00:00Z"), List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
+        when(accessTokenService.issueToken(any(Authentication.class))).thenReturn(accessTokenResult);
 
         // Act
         var response = authController.loginUser(loginRequest);

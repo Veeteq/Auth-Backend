@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veeteq.auth.authservice.config.JacksonProblemConfig;
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
-import com.veeteq.auth.authservice.service.AccessTokenService;
-import com.veeteq.auth.authservice.service.AuthUserService;
-import com.veeteq.auth.authservice.service.CookieService;
-import com.veeteq.auth.authservice.service.RefreshTokenService;
+import com.veeteq.auth.authservice.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -102,8 +100,8 @@ public class AuthController3Test {
 
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
         when(authUserService.findByUsername(AUTHENTICATED_USERNAME)).thenReturn(Optional.of(authUser));
-        when(accessTokenService.issueToken(any(), any(), any())).thenReturn(ACCESS_TOKEN);
-        when(accessTokenService.extractRoles(any())).thenReturn(List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
+        var accessTokenResult = new AccessTokenResult(ACCESS_TOKEN, Instant.parse("2026-08-15T18:00:00Z"), List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
+        when(accessTokenService.issueToken(any(Authentication.class))).thenReturn(accessTokenResult);
         when(refreshTokenService.issueToken(authUser)).thenReturn(refreshToken);
         when(cookieService.createCookie(REFRESH_TOKEN)).thenReturn(refreshCookie);
         when(jwtEncoder.encode(any())).thenReturn(createJwt());
@@ -119,6 +117,7 @@ public class AuthController3Test {
                 .andExpect(status().isOk())
                 .andExpect(header().exists(HttpHeaders.SET_COOKIE))
                 .andExpect(jsonPath("$.type").value("Bearer"))
+                .andExpect(jsonPath("$.token").value(ACCESS_TOKEN))
                 .andExpect(jsonPath("$.expiresAt").isNotEmpty())
                 .andExpect(jsonPath("$.roles").isArray())
                 .andExpect(jsonPath("$.roles").value(containsInAnyOrder("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN")));

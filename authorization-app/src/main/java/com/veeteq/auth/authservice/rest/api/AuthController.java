@@ -13,12 +13,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.web.bind.annotation.*;
 
 import com.veeteq.auth.authservice.rest.dto.AuthTokenResponseDto;
@@ -34,17 +28,13 @@ import com.veeteq.auth.authservice.service.RefreshTokenService;
 public class AuthController implements AuthenticationApi {
     private final AccessTokenService accessTokenService;
     private final AuthenticationManager authManager;
-    private final JwtEncoder jwtEncoder;
-    private final JwtDecoder jwtDecoder;
     private final AuthUserService authUserService;
     private final RefreshTokenService refreshTokenService;
     private final CookieService cookieService;
 
-    public AuthController(AccessTokenService accessTokenService, AuthenticationManager authManager, JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, AuthUserService authUserService, RefreshTokenService refreshTokenService, CookieService cookieService) {
+    public AuthController(AccessTokenService accessTokenService, AuthenticationManager authManager, AuthUserService authUserService, RefreshTokenService refreshTokenService, CookieService cookieService) {
         this.accessTokenService = accessTokenService;
         this.authManager = authManager;
-        this.jwtEncoder = jwtEncoder;
-        this.jwtDecoder = jwtDecoder;
         this.authUserService = authUserService;
         this.refreshTokenService = refreshTokenService;
         this.cookieService = cookieService;
@@ -53,9 +43,6 @@ public class AuthController implements AuthenticationApi {
     // Token lifetime configurable via properties (default 3600s)
     @Value("${app.jwt.access-token-seconds:3600}")
     private long accessTokenSeconds;
-
-    @Value("${app.security.issuer}")
-    private String issuer;
 
     /**
      * LOGIN: issue access token + set refresh cookie
@@ -72,17 +59,13 @@ public class AuthController implements AuthenticationApi {
         var headers = new HttpHeaders();
         headers.add("Set-Cookie", cookie.toString());
 
-        Instant now = Instant.now();
-        Instant expiresAt = now.plusSeconds(accessTokenSeconds);
-
-        var roles = accessTokenService.extractRoles(authentication);
-        var token = accessTokenService.issueToken(authentication, now, expiresAt);
+        var accessToken = accessTokenService.issueToken(authentication);
 
         var response = new LoginResponseDto()
                 .type("Bearer")
-                .token(token)
-                .expiresAt(LocalDateTime.ofInstant(expiresAt, ZoneOffset.UTC))
-                .roles(roles)
+                .token(accessToken.token())
+                .expiresAt(LocalDateTime.ofInstant(accessToken.expiresAt(), ZoneOffset.UTC))
+                .roles(accessToken.roles())
                 .user(null);
 
         return ResponseEntity.ok()
@@ -90,15 +73,17 @@ public class AuthController implements AuthenticationApi {
                 .body(response);
     }
 
-    /** REFRESH: read refresh cookie, validate, rotate, return new access token */
+    /**
+     * REFRESH: read refresh cookie, validate, rotate, return new access token
+     */
     @Override
     @PostMapping(path = "/refresh")
     public ResponseEntity<AuthTokenResponseDto> refreshToken(String setCookie) {
         var cookieName = cookieService.getName();
         var cookieToken = extractCookie(setCookie, cookieName);
 
-        if (cookieToken != null && !cookieToken.isBlank()) {
-            //return ResponseEntity.status(401).body(Map.of("error", "Missing refresh token"));
+        if (cookieToken == null || cookieToken.isBlank()) {
+            return ResponseEntity.status(401).build();
         }
 
         var authUser = refreshTokenService.validateTokenAndGetAuthuser(cookieToken);
@@ -106,37 +91,16 @@ public class AuthController implements AuthenticationApi {
         // rotate: revoke old, issue new
         var rotated = refreshTokenService.rotateTokenForUser(authUser);
 
-        // set the new cookie
-        ResponseCookie cookie = cookieService.createCookie(rotated.getToken());
+        var cookie = cookieService.createCookie(rotated.getToken());
         var headers = new HttpHeaders();
-        headers.add("Set-Cookie", cookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        // issue new access token for the same principal
-        var userRoles = authUser.getRoles().stream()
-                .map(SimpleGrantedAuthority::new)
-                .toList();
-        var authentication = new UsernamePasswordAuthenticationToken(authUser.getUsername(), null, userRoles);
-
-        Instant now = Instant.now();
-        Instant expiresAt = now.plusSeconds(accessTokenSeconds);
-
-        List<String> roles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .subject(authentication.getName())
-                .issuedAt(now)
-                .expiresAt(expiresAt)
-                .claim("roles", roles)
-                .build();
-
-        String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        var accessToken = accessTokenService.issueToken(authUser);
 
         var response = new AuthTokenResponseDto()
                 .type("Bearer")
-                .token(token)
-                .expiresAt(LocalDateTime.ofInstant(expiresAt, ZoneOffset.UTC));
+                .token(accessToken.token())
+                .expiresAt(LocalDateTime.ofInstant(accessToken.expiresAt(), ZoneOffset.UTC));
 
         return ResponseEntity.ok()
                 .headers(headers)
@@ -148,7 +112,9 @@ public class AuthController implements AuthenticationApi {
         return null;
     }
 
-    /** LOGOUT: revoke refresh token and clear cookie */
+    /**
+     * LOGOUT: revoke refresh token and clear cookie
+     */
     @Override
     @PostMapping("/logout")
     public ResponseEntity<Void> logoutUser(String setCookie) {
@@ -167,12 +133,13 @@ public class AuthController implements AuthenticationApi {
                 .build();
     }
 
-    @GetMapping("/validate")
-    public String validate(@RequestParam String token) {
-        jwtDecoder.decode(token);
-        return "VALID";
-    }
-
+    /*
+        @GetMapping("/validate")
+        public String validate(@RequestParam String token) {
+            jwtDecoder.decode(token);
+            return "VALID";
+        }
+    */
     private String extractCookie(String cookieHeader, String cookieName) {
         if (cookieHeader == null) return null;
         var cookieSearch = cookieName + "=";
