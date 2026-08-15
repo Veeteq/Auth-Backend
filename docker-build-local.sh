@@ -4,8 +4,12 @@ set -e
 
 APP_NAME="authorization-app"
 IMAGE_NAME="authorization-app"
+NETWORK_NAME="budget-network"
 HOST_PORT="8282"
 CONTAINER_PORT="8080"
+
+echo "Configuring app network"
+docker network create "${NETWORK_NAME}"
 
 echo "Building Docker image: ${IMAGE_NAME}"
 
@@ -22,6 +26,7 @@ echo "Starting container: ${APP_NAME}"
 
 docker run -d \
   --name "${APP_NAME}" \
+  --network "${NETWORK_NAME}" \
   -p "${HOST_PORT}:${CONTAINER_PORT}" \
   -e SERVER_PORT="${CONTAINER_PORT}" \
   -e AUTH_ISSUER="http://localhost:${HOST_PORT}" \
