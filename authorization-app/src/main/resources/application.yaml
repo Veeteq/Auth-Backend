@@ -71,7 +71,7 @@ app:
       http-only: true
       same-site: Lax                  # use "None" for cross-site; requires secure=true
   security:
-      issuer=${AUTH_ISSUER:http://localhost:8282}
+      issuer: ${AUTH_ISSUER:http://localhost:8282}
 
 management:
   endpoint:

@@ -6,6 +6,7 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 
+import com.veeteq.auth.authservice.service.AccessTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -31,7 +32,7 @@ import com.veeteq.auth.authservice.service.RefreshTokenService;
 @RestController
 @RequestMapping("${app.api.base-path}/auth")
 public class AuthController implements AuthenticationApi {
-
+    private final AccessTokenService accessTokenService;
     private final AuthenticationManager authManager;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
@@ -39,11 +40,8 @@ public class AuthController implements AuthenticationApi {
     private final RefreshTokenService refreshTokenService;
     private final CookieService cookieService;
 
-    // Token lifetime configurable via properties (default 3600s)
-    @Value("${app.jwt.access-token-seconds:3600}")
-    private long accessTokenSeconds;
-
-    public AuthController(AuthenticationManager authManager, JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, AuthUserService authUserService, RefreshTokenService refreshTokenService, CookieService cookieService) {
+    public AuthController(AccessTokenService accessTokenService, AuthenticationManager authManager, JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, AuthUserService authUserService, RefreshTokenService refreshTokenService, CookieService cookieService) {
+        this.accessTokenService = accessTokenService;
         this.authManager = authManager;
         this.jwtEncoder = jwtEncoder;
         this.jwtDecoder = jwtDecoder;
@@ -51,6 +49,10 @@ public class AuthController implements AuthenticationApi {
         this.refreshTokenService = refreshTokenService;
         this.cookieService = cookieService;
     }
+
+    // Token lifetime configurable via properties (default 3600s)
+    @Value("${app.jwt.access-token-seconds:3600}")
+    private long accessTokenSeconds;
 
     @Value("${app.security.issuer}")
     private String issuer;
@@ -73,19 +75,8 @@ public class AuthController implements AuthenticationApi {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(accessTokenSeconds);
 
-        List<String> roles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(issuer)
-                .subject(authentication.getName())
-                .issuedAt(now)
-                .expiresAt(expiresAt)
-                .claim("roles", roles)
-                .build();
-
-        String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        var roles = accessTokenService.extractRoles(authentication);
+        var token = accessTokenService.issueToken(authentication, now, expiresAt);
 
         var response = new LoginResponseDto()
                 .type("Bearer")
