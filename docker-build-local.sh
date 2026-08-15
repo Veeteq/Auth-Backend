@@ -1,6 +1,34 @@
 #!/bin/bash
 
+set -e
+
+APP_NAME="authorization-app"
+IMAGE_NAME="authorization-app"
+HOST_PORT="8282"
+CONTAINER_PORT="8080"
+
+echo "Building Docker image: ${IMAGE_NAME}"
+
 docker build \
   --progress=plain \
-  -t authorization-app \
+  -t "${IMAGE_NAME}" \
   -f Dockerfile.local .
+
+echo "Stopping old container if exists"
+
+docker rm -f "${APP_NAME}" 2>/dev/null || true
+
+echo "Starting container: ${APP_NAME}"
+
+docker run -d \
+  --name "${APP_NAME}" \
+  -p "${HOST_PORT}:${CONTAINER_PORT}" \
+  -e SERVER_PORT="${CONTAINER_PORT}" \
+  -e AUTH_ISSUER="http://localhost:${HOST_PORT}" \
+  "${IMAGE_NAME}"
+
+echo "Container started"
+echo "Health check URL:"
+echo "http://localhost:${HOST_PORT}/actuator/health"
+echo "JWKS URL:"
+echo "http://localhost:${HOST_PORT}/.well-known/jwks.json"
