@@ -52,6 +52,9 @@ public class AuthController implements AuthenticationApi {
         this.cookieService = cookieService;
     }
 
+    @Value("${app.security.issuer}")
+    private String issuer;
+
     /**
      * LOGIN: issue access token + set refresh cookie
      */
@@ -75,7 +78,7 @@ public class AuthController implements AuthenticationApi {
                 .toList();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("http://localhost:8282")
+                .issuer(issuer)
                 .subject(authentication.getName())
                 .issuedAt(now)
                 .expiresAt(expiresAt)
