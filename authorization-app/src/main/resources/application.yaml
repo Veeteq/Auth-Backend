@@ -1,10 +1,10 @@
 server:
   address: 0.0.0.0
-  port: 8282
+  port: ${SERVER_PORT:8282}
 
 spring:
   application:
-    name: auth-server
+    name: authservice
 
   mvc:
     pathmatch:
