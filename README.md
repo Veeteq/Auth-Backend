@@ -52,7 +52,7 @@ Permit /auth/** (login/register/refresh)
 Protect /api/**
 Configure CORS allowed origin for Angular (http://localhost:4200 by default).
 Password encoder: BCryptPasswordEncoder.
-
+Obtain our hash using an online service like Bcrypt Generator: https://bcrypt-generator.com/
 
 Implement UserDetailsService to load users by username.
 Implement JWT utilities:

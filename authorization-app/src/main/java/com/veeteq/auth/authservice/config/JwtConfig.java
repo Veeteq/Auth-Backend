@@ -64,7 +64,7 @@ public class JwtConfig {
                 .keyID("auth-service-key")
                 .build();
 
-        JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
+        var jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwkSource);
     }
 
