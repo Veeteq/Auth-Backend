@@ -27,6 +27,12 @@ jobs:
           JWT_PRIVATE_KEY_PEM: ${{ secrets.JWT_PRIVATE_KEY_PEM }}
           JWT_PUBLIC_KEY_PEM: ${{ secrets.JWT_PUBLIC_KEY_PEM }}
 
+      - name: Verify JWT key files exist
+        run: |
+          ls -l authorization-app/src/main/resources/keys
+          test -s authorization-app/src/main/resources/keys/private-key.pem
+          test -s authorization-app/src/main/resources/keys/public-key.pem
+
       - name: Unit Tests
         run: mvn -B test --file pom.xml
 
