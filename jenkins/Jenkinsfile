@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+
+    environment {
+      JAR_PATH = 'authorization-app/target/authorization-app.jar'
+      REPOSITORY_URL = 'ssh://root@192.168.56.104/root/git/bck-authorization-svc.git'
+      IMAGE_NAME = 'authorization-app'
+      IMAGE_TAG = 'latest'
+      CONTAINER_NAME = 'authorization-app'
+      HOST_PORT = '8082'
+      CONTAINER_PORT = '8080'
+    }
+
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch name to build')
+    }
+
+    stages {
+        stage('Debug') {
+            steps {
+                echo "Building branch: ${params.BRANCH}"
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git url: env.REPOSITORY_URL, branch: params.BRANCH
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'chmod +x mvnw'
+                sh './mvnw -B -DskipTests clean package'
+            }
+        }
+
+        stage('Verify Artifact') {
+            steps {
+                sh '''
+                    echo "Checking built artifact..."
+                    test -f ${JAR_PATH}
+                    ls -lh ${JAR_PATH}
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh '''
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'docker network create backend-network'
+                sh 'docker rm -f ${CONTAINER_NAME} || true'
+                sh '''
+                    docker run -d \
+                    -p ${HOST_PORT}:${CONTAINER_PORT} \
+                    --network backend-network \
+                    --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+                sh 'docker logs --tail 30 ${CONTAINER_NAME}'
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                    sleep 10
+                    for i in $(seq 1 30); do
+                        echo "Attempt $i"
+                        docker exec ${CONTAINER_NAME} curl -s http://localhost:${CONTAINER_PORT}/actuator/health | grep '"status":"UP"' && break
+                        sleep 1
+                    done
+                    echo "Health check passed"
+                '''
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                sh '''
+                    docker image prune -f
+                '''
+            }
+        }
+    }
+}

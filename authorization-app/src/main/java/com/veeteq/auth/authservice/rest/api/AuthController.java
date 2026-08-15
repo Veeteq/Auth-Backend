@@ -52,9 +52,11 @@ public class AuthController implements AuthenticationApi {
         this.cookieService = cookieService;
     }
 
-    /** LOGIN: issue access token + set refresh cookie */
+    /**
+     * LOGIN: issue access token + set refresh cookie
+     */
     @Override
-    @PostMapping(path = "/authenticate")
+    @PostMapping(path = "/login")
     public ResponseEntity<LoginResponseDto> loginUser(LoginRequestDto loginRequest) {
         var authToken = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
         var authentication = authManager.authenticate(authToken);
@@ -147,7 +149,7 @@ public class AuthController implements AuthenticationApi {
                 .body(response);
     }
 
-    //@Override
+    @Override
     public ResponseEntity<Void> registerUser(UserRegistrationDto userRegistrationDto) {
         return null;
     }
