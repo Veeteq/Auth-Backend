@@ -1,4 +1,4 @@
-package com.veeteq.auth.authservice.rest.api;
+package com.veeteq.auth.authservice.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

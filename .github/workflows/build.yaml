@@ -18,6 +18,21 @@ jobs:
           java-version: 21
           cache: 'maven'
 
+      - name: Create JWT key files
+        run: |
+          mkdir -p authorization-app/src/main/resources/keys
+          printf '%s\n' "${JWT_PRIVATE_KEY_PEM}" > authorization-app/src/main/resources/keys/private-key.pem
+          printf '%s\n' "${JWT_PUBLIC_KEY_PEM}" > authorization-app/src/main/resources/keys/public-key.pem
+        env:
+          JWT_PRIVATE_KEY_PEM: ${{ secrets.JWT_PRIVATE_KEY_PEM }}
+          JWT_PUBLIC_KEY_PEM: ${{ secrets.JWT_PUBLIC_KEY_PEM }}
+
+      - name: Verify JWT key files exist
+        run: |
+          ls -l authorization-app/src/main/resources/keys
+          test -s authorization-app/src/main/resources/keys/private-key.pem
+          test -s authorization-app/src/main/resources/keys/public-key.pem
+
       - name: Unit Tests
         run: mvn -B test --file pom.xml
 
