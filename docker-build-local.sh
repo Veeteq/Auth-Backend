@@ -4,7 +4,8 @@ set -e
 
 APP_NAME="authorization-app"
 IMAGE_NAME="authorization-app"
-NETWORK_NAME="budget-network"
+NETWORK_NAME="backend-network"
+HOST_NAME="localhost"
 HOST_PORT="8282"
 CONTAINER_PORT="8080"
 
@@ -34,11 +35,13 @@ docker run -d \
   --network "${NETWORK_NAME}" \
   -p "${HOST_PORT}:${CONTAINER_PORT}" \
   -e SERVER_PORT="${CONTAINER_PORT}" \
-  -e AUTH_ISSUER="http://localhost:${HOST_PORT}" \
+  -e AUTH_ISSUER="http://${HOST_NAME}:${HOST_PORT}" \
   "${IMAGE_NAME}"
 
 echo "Container started"
+
 echo "Health check URL:"
-echo "http://localhost:${HOST_PORT}/actuator/health"
+echo "http://${HOST_NAME}:${HOST_PORT}/actuator/health"
+
 echo "JWKS URL:"
-echo "http://localhost:${HOST_PORT}/.well-known/jwks.json"
+echo "http://${HOST_NAME}:${HOST_PORT}/.well-known/jwks.json"
