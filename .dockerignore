@@ -1,9 +1,13 @@
 .git
+.gitignore
 .github
 .idea
 .settings
 
 **/target
+!authorization-app/target/**
+
+*.log
 
 .mvn
 mvnw

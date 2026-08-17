@@ -1,9 +1,6 @@
 HELP.md
 target/
-mvnw
-mvnw.cmd
-.mvn/
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -34,3 +31,23 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Backup ###
+bckup/
+
+### Logs ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Temp ###
+tmp/
+temp/
+
+### Secrets ###
+**/src/main/resources/keys/private-key.pem
+**/src/main/resources/keys/public-key.pem
+*.pem

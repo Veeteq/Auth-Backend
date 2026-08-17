@@ -2,6 +2,8 @@ pipeline {
     agent any
 
     environment {
+      VM_HOST = '192.168.56.104'
+      NETWORK_NAME = 'backend-network'
       JAR_PATH = 'authorization-app/target/authorization-app.jar'
       REPOSITORY_URL = 'ssh://root@192.168.56.104/root/git/bck-authorization-svc.git'
       IMAGE_NAME = 'authorization-app'
@@ -25,6 +27,24 @@ pipeline {
         stage('Checkout') {
             steps {
                 git url: env.REPOSITORY_URL, branch: params.BRANCH
+            }
+        }
+
+        stage('Credentials') {
+            steps {
+                withCredentials([
+                    file(credentialsId: 'jwt-private-key', variable: 'PRIVATE_KEY_FILE'),
+                    file(credentialsId: 'jwt-public-key', variable: 'PUBLIC_KEY_FILE')
+                ]) {
+                    sh '''
+                    mkdir -p authorization-app/src/main/resources/keys
+
+                    cp "$PRIVATE_KEY_FILE" authorization-app/src/main/resources/keys/private-key.pem
+                    cp "$PUBLIC_KEY_FILE" authorization-app/src/main/resources/keys/public-key.pem
+
+                    ls -l authorization-app/src/main/resources/keys
+                '''
+                }
             }
         }
 
@@ -55,12 +75,16 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh 'docker network create backend-network'
+                sh '''
+                    docker network inspect ${NETWORK_NAME} > /dev/null 2>&1 || \
+                    docker network create ${NETWORK_NAME}
+                '''
                 sh 'docker rm -f ${CONTAINER_NAME} || true'
                 sh '''
                     docker run -d \
                     -p ${HOST_PORT}:${CONTAINER_PORT} \
-                    --network backend-network \
+                    --network ${NETWORK_NAME} \
+                    -e AUTH_ISSUER=http://${VM_HOST}:${HOST_PORT} \
                     --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
                 sh 'docker logs --tail 30 ${CONTAINER_NAME}'
@@ -87,6 +111,15 @@ pipeline {
                     docker image prune -f
                 '''
             }
+        }
+    }
+
+    post {
+        always {
+            sh '''
+                rm -f authorization-app/src/main/resources/keys/private-key.pem || true
+                rm -f authorization-app/src/main/resources/keys/public-key.pem || true
+            '''
         }
     }
 }

@@ -2,7 +2,7 @@
 
 TOKEN=$(cat /root/jenkins/token)
 JENKINS_URL="http://localhost:8080"
-JOB_NAME="BackendAuthMngrApp"
+JOB_NAME="BackendAuthenticationServiceApp"
 
 while read oldrev newrev refname
 do
