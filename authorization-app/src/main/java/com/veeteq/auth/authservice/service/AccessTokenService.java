@@ -43,7 +43,7 @@ public class AccessTokenService {
 
     public AccessTokenResult issueToken(AuthUser authUser) {
         var authorities = authUser.getRoles().stream()
-                .map(SimpleGrantedAuthority::new)
+                .map(role -> new SimpleGrantedAuthority(role.name()))
                 .toList();
 
         var authentication = new UsernamePasswordAuthenticationToken(

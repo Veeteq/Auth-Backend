@@ -20,7 +20,6 @@ public class AuthUserRepositoryTest {
     @Rollback(value = false)
     void testSaveAndFindByUsername() {
         var user = new AuthUser()
-                .setId(11L)
                 .setUsername("testuser_1")
                 .setPassword("password")
                 .setEmail("testuser.1@example.com")
@@ -39,7 +38,6 @@ public class AuthUserRepositoryTest {
     @Rollback(value = false)
     void testSaveAndFindByEmail() {
         var user = new AuthUser()
-                .setId(12L)
                 .setUsername("testuser_2")
                 .setPassword("password")
                 .setEmail("testuser.2@example.com")

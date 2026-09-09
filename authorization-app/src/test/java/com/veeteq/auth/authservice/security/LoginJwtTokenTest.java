@@ -3,6 +3,7 @@ package com.veeteq.auth.authservice.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
 import com.veeteq.auth.authservice.rest.dto.LoginResponseDto;
+import com.veeteq.auth.authservice.rest.dto.UserRoleDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,10 +53,10 @@ public class LoginJwtTokenTest {
         assertThat(response.getToken()).isNotBlank();
 
         assertThat(response.getRoles())
-                .contains("USER_ROLE")
-                .contains("ACCOUNT_ADMIN")
-                .contains("DOCUMENT_ADMIN")
-                .contains("ITEM_ADMIN");
+                .contains(UserRoleDto.USER_ROLE)
+                .contains(UserRoleDto.ACCOUNT_ADMIN)
+                .contains(UserRoleDto.DOCUMENT_ADMIN)
+                .contains(UserRoleDto.ITEM_ADMIN);
 
         var jwt = jwtDecoder.decode(response.getToken());
 
