@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veeteq.auth.authservice.config.JacksonProblemConfig;
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
+import com.veeteq.auth.authservice.mapper.AuthUserMapper;
 import com.veeteq.auth.authservice.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -76,6 +77,9 @@ public class AuthController3Test {
     @MockitoBean
     private CookieService cookieService;
 
+    @MockitoBean
+    private AuthUserMapper authUserMapper;
+
     @Value("${app.api.base-path}/auth")
     private String baseUrl;
 
@@ -87,7 +91,6 @@ public class AuthController3Test {
         var request = createLoginRequest();
         var authentication = new UsernamePasswordAuthenticationToken(AUTHENTICATED_USERNAME, null,List.of(new SimpleGrantedAuthority("ROLE_USER")));
         var authUser = new AuthUser()
-                .setId(1L)
                 .setUsername(AUTHENTICATED_USERNAME);
 
         var refreshToken = new RefreshToken()

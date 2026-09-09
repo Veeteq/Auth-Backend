@@ -20,6 +20,7 @@
 		<maven.compiler.target>21</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<default.package>${project.groupId}.authservice</default.package>
+        <openapi.inputSpec>${project.basedir}/src/main/resources/openapi.yaml</openapi.inputSpec>
 	</properties>
 
     <dependencies>
@@ -57,7 +58,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.16.0</version>
+                <version>7.17.0</version>
                 <executions>
                     <execution>
                         <id>authentication_api</id>
@@ -66,8 +67,9 @@
                         </goals>
                         <configuration>
                             <skipValidateSpec>true</skipValidateSpec>
-                            <!-- <inputSpec>http://127.0.0.1:8181/openapi.json</inputSpec> -->
                             <inputSpec>https://veeteq.github.io/OpenAPI-Auth/openapi.yaml</inputSpec>
+                            <!-- <inputSpec>http://127.0.0.1:8181/openapi.json</inputSpec> -->
+                            <!--<inputSpec>${openapi.inputSpec}</inputSpec>-->
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <apiPackage>${default.package}.rest.api</apiPackage>

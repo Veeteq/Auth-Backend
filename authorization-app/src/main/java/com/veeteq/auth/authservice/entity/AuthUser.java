@@ -4,19 +4,9 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
-
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "authusers", uniqueConstraints = {
@@ -27,6 +17,8 @@ public class AuthUser {
 
     @Id
     @Column(name = "user_id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "authuser_seq")
+    @SequenceGenerator(name = "authuser_seq", sequenceName = "authuser_seq", allocationSize = 1)
     private Long id;
 
     /** Unique username for login */
@@ -53,9 +45,10 @@ public class AuthUser {
 
     /** Roles, e.g., ROLE_USER, ROLE_ADMIN */
     @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id", foreignKey = @ForeignKey(name = "user_roles_user_fk")))
     @Column(name = "role_name", nullable = false, length = 64)
-    private Set<String> roles = new HashSet<>();
+    private Set<UserRole> roles = new HashSet<>();
     
     @Column(name = "create_time")
     @CreatedDate
@@ -128,11 +121,11 @@ public class AuthUser {
         return this;
     }
 
-    public Set<String> getRoles() {
+    public Set<UserRole> getRoles() {
         return roles;
     }
 
-    public AuthUser addToRoles(String role) {
+    public AuthUser addToRoles(UserRole role) {
 		this.roles.add(role);
         return this;
 	}

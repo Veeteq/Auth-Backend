@@ -1,24 +1,24 @@
 package com.veeteq.auth.authservice.rest.api;
 
-import java.time.ZonedDateTime;
-import java.util.Arrays;
-
+import com.veeteq.auth.authservice.mapper.AuthUserMapper;
+import com.veeteq.auth.authservice.rest.dto.*;
 import com.veeteq.auth.authservice.service.AccessTokenService;
+import com.veeteq.auth.authservice.service.AuthUserService;
+import com.veeteq.auth.authservice.service.CookieService;
+import com.veeteq.auth.authservice.service.RefreshTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.veeteq.auth.authservice.rest.dto.AuthTokenResponseDto;
-import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
-import com.veeteq.auth.authservice.rest.dto.LoginResponseDto;
-import com.veeteq.auth.authservice.rest.dto.UserRegistrationDto;
-import com.veeteq.auth.authservice.service.AuthUserService;
-import com.veeteq.auth.authservice.service.CookieService;
-import com.veeteq.auth.authservice.service.RefreshTokenService;
+import java.time.ZonedDateTime;
+import java.util.Arrays;
 
 import static java.time.ZoneOffset.UTC;
 
@@ -28,13 +28,15 @@ public class AuthController implements AuthenticationApi {
     private final AccessTokenService accessTokenService;
     private final AuthenticationManager authManager;
     private final AuthUserService authUserService;
+    private final AuthUserMapper authUserMapper;
     private final RefreshTokenService refreshTokenService;
     private final CookieService cookieService;
 
-    public AuthController(AccessTokenService accessTokenService, AuthenticationManager authManager, AuthUserService authUserService, RefreshTokenService refreshTokenService, CookieService cookieService) {
+    public AuthController(AccessTokenService accessTokenService, AuthenticationManager authManager, AuthUserService authUserService, AuthUserMapper authUserMapper, RefreshTokenService refreshTokenService, CookieService cookieService) {
         this.accessTokenService = accessTokenService;
         this.authManager = authManager;
         this.authUserService = authUserService;
+        this.authUserMapper = authUserMapper;
         this.refreshTokenService = refreshTokenService;
         this.cookieService = cookieService;
     }
@@ -60,11 +62,12 @@ public class AuthController implements AuthenticationApi {
 
         var accessToken = accessTokenService.issueToken(authentication);
 
+        var roles = accessToken.roles().stream().map(s -> UserRoleDto.valueOf(s)).toList();
         var response = new LoginResponseDto()
                 .type("Bearer")
                 .token(accessToken.token())
                 .expiresAt(ZonedDateTime.ofInstant(accessToken.expiresAt(), UTC))
-                .roles(accessToken.roles())
+                .roles(roles)
                 .user(null);
 
         return ResponseEntity.ok()
@@ -107,8 +110,10 @@ public class AuthController implements AuthenticationApi {
     }
 
     @Override
+    @PostMapping(path = "/register")
     public ResponseEntity<Void> registerUser(UserRegistrationDto userRegistrationDto) {
-        return null;
+        var saved = authUserService.register(userRegistrationDto.getUsername(), userRegistrationDto.getPassword(), userRegistrationDto.getEmail(), userRegistrationDto.getFirstName(), userRegistrationDto.getLastName());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     /**
@@ -125,20 +130,13 @@ public class AuthController implements AuthenticationApi {
 
         ResponseCookie cookie = cookieService.clearCookie();
         var headers = new HttpHeaders();
-        headers.add("Set-Cookie", cookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity.noContent()
                 .headers(headers)
                 .build();
     }
 
-    /*
-        @GetMapping("/validate")
-        public String validate(@RequestParam String token) {
-            jwtDecoder.decode(token);
-            return "VALID";
-        }
-    */
     private String extractCookie(String cookieHeader, String cookieName) {
         if (cookieHeader == null) return null;
         var cookieSearch = cookieName + "=";

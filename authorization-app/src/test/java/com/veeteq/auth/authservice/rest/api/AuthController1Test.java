@@ -3,6 +3,7 @@ package com.veeteq.auth.authservice.rest.api;
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
 import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
+import com.veeteq.auth.authservice.rest.dto.UserRoleDto;
 import com.veeteq.auth.authservice.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,7 +81,7 @@ public class AuthController1Test {
         assertEquals("Bearer", responseBody.getType());
         assertEquals("test-access-token", responseBody.getToken());
         //assertEquals(expiresAt.toString(), responseBody.getExpiresAt());
-        assertEquals(List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"), responseBody.getRoles());
+        assertEquals(List.of(UserRoleDto.USER_ROLE, UserRoleDto.ACCOUNT_ADMIN, UserRoleDto.DOCUMENT_ADMIN, UserRoleDto.ITEM_ADMIN), responseBody.getRoles());
     }
     
     @Test

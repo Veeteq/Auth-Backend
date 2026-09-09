@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import com.veeteq.auth.authservice.entity.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,6 +94,6 @@ public class AuthUserServiceTest {
         assertEquals("Test", savedUser.getFirstname());
         assertEquals("User", savedUser.getLastname());
         assertTrue(savedUser.isEnabled());
-        assertTrue(savedUser.getRoles().contains("ROLE_USER"));
+        assertTrue(savedUser.getRoles().contains(UserRole.USER_ROLE));
     }
 }

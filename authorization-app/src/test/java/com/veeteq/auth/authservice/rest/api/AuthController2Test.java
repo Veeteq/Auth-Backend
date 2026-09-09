@@ -46,7 +46,7 @@ public class AuthController2Test {
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE)) // no refresh cookie on 401
-                .andExpect(content().contentType("application/problem+json"))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status", is(401)))
                 .andExpect(jsonPath("$.status").value(401));
     }
